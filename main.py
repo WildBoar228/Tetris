@@ -128,7 +128,7 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
     running = True
 
-    with open('figures.txt') as file:
+    with open('data/figures.txt') as file:
         figs = file.read().split('\n\n')[:-1]
         figure = Figure(random.choice(figs))
         print(figure)
