@@ -1,6 +1,8 @@
 import pygame
 import random
 import time
+import os
+import sys
 
 
 if __name__ == '__main__':
@@ -96,10 +98,17 @@ class Figure(Board):
                 else:
                     self.board[-1].append(1)
 
+        self.color = random.choice(['red', 'green', 'blue'])
         self.bricks = pygame.sprite.Group()
+        for y in range(len(self.board)):
+            for x in range(len(self.board[y])):
+                if self.board[y][x] == 1:
+                    brick = Brick(f'{self.color}_brick.png',
+                                  (self.cell_size * x, self.cell_size * y), self)
+                    self.board[y][x] = brick
+                    self.bricks.add(brick)
 
-    def rotate(self):
-        print('rotate 90')
+    def rotate_left(self):
         m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
         for x in range(len(self.board)):
             for y in range(len(self.board[0])):
@@ -108,17 +117,35 @@ class Figure(Board):
                 m2[x2][y2] = self.board[x][y]
         self.board = m2
 
+        self.update_bricks_pos()
+
+    def rotate_right(self):
+        for i in range(3):
+            self.rotate_left()
+
+    def update_bricks_pos(self):
+        for y in range(len(self.board)):
+            for x in range(len(self.board[y])):
+                if self.board[y][x] != 0:
+                    self.board[y][x].pos = (self.cell_size * x, self.cell_size * y)
+
+    def render(self, screen):
+        self.bricks.update()
+        self.bricks.draw(screen)
+
 
 class Brick(pygame.sprite.Sprite):
-    def __init__(self, image, pos, fig):
+    def __init__(self, image, pos, fig, *group):
+        super().__init__(*group)
         self.image = load_image(image)
-        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (fig.cell_size, fig.cell_size))
+        self.rect = pygame.Rect(0, 0, fig.cell_size, fig.cell_size)
         self.pos = pos
         self.fig = fig
 
     def update(self):
-        self.rect.x = self.fig.rect.x + self.pos[0]
-        self.rect.y = self.fig.rect.y + self.pos[1]
+        self.rect.x = self.fig.left + self.pos[0]
+        self.rect.y = self.fig.top + self.pos[1]
 
 
 if __name__ == '__main__':
@@ -130,24 +157,26 @@ if __name__ == '__main__':
 
     with open('data/figures.txt') as file:
         figs = file.read().split('\n\n')[:-1]
-        figure = Figure(random.choice(figs))
-        print(figure)
-        figure.rotate()
-        print(figure)
-        figure.rotate()
-        print(figure)
-        figure.rotate()
-        print(figure)
-        figure.rotate()
+        figure = Figure(figs[random.randint(0, len(figs))])
+        figure.left = 100
+        figure.top = 100
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                board.get_click(event.pos)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    print(1)
+                    figure.rotate_left()
+                    print(figure)
+                if event.key == pygame.K_RIGHT:
+                    figure.rotate_right()
+                    print(2)
+                    print(figure)
         
         screen.fill((0, 0, 0))
         board.render(screen)
+        figure.render(screen)
         pygame.display.flip()
 
         clock.tick(fps)
