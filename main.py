@@ -1,13 +1,46 @@
 import pygame
 import random
-import time
+import os
+import sys
 
 
-if __name__ == '__main__':
-    pygame.init()
-    
-    screen = pygame.display.set_mode((300, 600))
-    pygame.display.set_caption('Тетрис')
+def draw_field_of_play(scr):
+    scr.fill((0, 0, 0))
+
+    # все линии, значки паузы и рестарта
+    pygame.draw.line(scr, (255, 255, 255), (0, 0), (0, 780), width=9)
+    pygame.draw.line(scr, (255, 255, 255), (510, 0), (510, 780), width=10)
+    pygame.draw.line(scr, (255, 255, 255), (0, 780), (510, 780), width=10)
+
+    pygame.draw.line(scr, (255, 255, 255), (0, 72), (510, 72), width=5)
+    pygame.draw.line(scr, (255, 255, 255), (77, 0), (77, 72), width=5)
+    pygame.draw.line(scr, (255, 255, 255), (432, 0), (432, 72), width=5)
+
+    pygame.draw.rect(scr, (255, 255, 255), (20, 15, 15, 40))
+    pygame.draw.rect(scr, (255, 255, 255), (45, 15, 15, 40))
+
+    pygame.draw.circle(scr, (255, 255, 255), (467, 35), 25, width=14)
+    pygame.draw.rect(scr, (0, 0, 0), (467, 35, 25, 25))
+    pygame.draw.polygon(scr, (255, 255, 255), ((472, 35), (498, 35), (485, 48)))
+
+    # ведение счёта
+    font = pygame.font.Font(None, 80)
+    text = font.render(str(score), True, (255, 255, 255))
+    text_x = width // 2 - text.get_width() // 2
+    scr.blit(text, (text_x, 10))
+
+
+# экран паузы/стартовый экран
+def draw_standby_screen(scr):
+    scr.fill((0, 0, 0))
+    font = pygame.font.Font(None, 90)
+    if start:
+        text = font.render('Пауза', True, (255, 255, 255))
+    else:
+        text = font.render('Старт', True, (255, 255, 255))
+    text_x = width // 2 - text.get_width() // 2
+    scr.blit(text, (text_x, 300))
+    pygame.draw.polygon(scr, (255, 255, 255), ((230, 400), (270, 420), (230, 440)))
 
 
 def load_image(name, colorkey=None):
@@ -16,7 +49,7 @@ def load_image(name, colorkey=None):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
     image = pygame.image.load(fullname)
-    
+
     if colorkey is not None:
         image = image.convert()
         if colorkey == -1:
@@ -24,8 +57,6 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey)
     else:
         image = image.convert_alpha()
-    return image
-
     return image
 
 
@@ -53,7 +84,6 @@ class Board:
                                              self.top + self.cell_size * y,
                                              self.cell_size, self.cell_size),
                                  width=1)'''
-
 
     def get_cell(self, mouse_pos):
         if mouse_pos[0] < self.left or mouse_pos[0] > self.left + self.width * self.cell_size:
@@ -87,7 +117,7 @@ class Board:
 class Figure(Board):
     def __init__(self, form):
         super().__init__(len(form.split('\n')), len(form.split('\n')[0]))
-        
+
         for line in form.split('\n'):
             self.board.append([])
             for cell in line:
@@ -122,35 +152,78 @@ class Brick(pygame.sprite.Sprite):
 
 
 if __name__ == '__main__':
+    pygame.init()
+
+    size = width, height = 510, 780
+    screen = pygame.display.set_mode(size)
+    pygame.display.set_caption('Тетрис')
+
     board = Board(10, 20)
     board.set_view(0, 0, 30)
     fps = 50
     clock = pygame.time.Clock()
     running = True
+    pause = True
+    start = False
+    score = 0
 
-    with open('data/figures.txt') as file:
-        figs = file.read().split('\n\n')[:-1]
-        figure = Figure(random.choice(figs))
-        print(figure)
-        figure.rotate()
-        print(figure)
-        figure.rotate()
-        print(figure)
-        figure.rotate()
-        print(figure)
-        figure.rotate()
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
-        
-        screen.fill((0, 0, 0))
+            if event.type == pygame.KEYDOWN:
+                if not start:
+                    with open('data/figures.txt') as file:
+                        figs = file.read().split('\n\n')[:-1]
+                        figure = Figure(random.choice(figs))
+                        print(figure)
+                        figure.rotate()
+                        print(figure)
+                        figure.rotate()
+                        print(figure)
+                        figure.rotate()
+                        print(figure)
+                        figure.rotate()
+                start = True
+                if event.key == pygame.K_SPACE:
+                    if pause:
+                        pause = False
+                    else:
+                        pause = True
+                elif event.key == pygame.K_KP_ENTER:
+                    pause = True
+                    start = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if not start:
+                    with open('data/figures.txt') as file:
+                        figs = file.read().split('\n\n')[:-1]
+                        figure = Figure(random.choice(figs))
+                        print(figure)
+                        figure.rotate()
+                        print(figure)
+                        figure.rotate()
+                        print(figure)
+                        figure.rotate()
+                        print(figure)
+                        figure.rotate()
+                if pause:
+                    pause = False
+                elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
+                    pause = True
+                elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
+                    pause = True
+                    start = False
+
+            # отрисовка экрана
+            if pause:
+                draw_standby_screen(screen)
+            else:
+                start = True
+                draw_field_of_play(screen)
         board.render(screen)
         pygame.display.flip()
-
         clock.tick(fps)
-    
     pygame.quit()
 
