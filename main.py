@@ -171,8 +171,6 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                board.get_click(event.pos)
             if event.type == pygame.KEYDOWN:
                 if not start:
                     with open('data/figures.txt') as file:
@@ -196,24 +194,25 @@ if __name__ == '__main__':
                     pause = True
                     start = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if not start:
-                    with open('data/figures.txt') as file:
-                        figs = file.read().split('\n\n')[:-1]
-                        figure = Figure(random.choice(figs))
-                        print(figure)
-                        figure.rotate()
-                        print(figure)
-                        figure.rotate()
-                        print(figure)
-                        figure.rotate()
-                        print(figure)
-                        figure.rotate()
-                if pause:
-                    pause = False
-                elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
-                    pause = True
-                elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
-                    pause = True
+                if event.button not in [4, 5]: # 4 и 5 - прокручивания мыши
+                    if not start:
+                        with open('data/figures.txt') as file:
+                            figs = file.read().split('\n\n')[:-1]
+                            figure = Figure(random.choice(figs))
+                            print(figure)
+                            figure.rotate()
+                            print(figure)
+                            figure.rotate()
+                            print(figure)
+                            figure.rotate()
+                            print(figure)
+                            figure.rotate()
+                    if pause:
+                        pause = False
+                    elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
+                        pause = True
+                    elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
+                        pause = True
                     start = False
 
             # отрисовка экрана
