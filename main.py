@@ -77,13 +77,13 @@ class Board:
         self.cell_size = cell_size
 
     def render(self, screen):
-        '''for x in range(self.width):
+        for x in range(self.width):
             for y in range(self.height):
                 pygame.draw.rect(screen, pygame.Color('white'),
                                  pygame.Rect(self.left + self.cell_size * x,
                                              self.top + self.cell_size * y,
                                              self.cell_size, self.cell_size),
-                                 width=1)'''
+                                 width=1)
 
     def get_cell(self, mouse_pos):
         if mouse_pos[0] < self.left or mouse_pos[0] > self.left + self.width * self.cell_size:
@@ -106,7 +106,7 @@ class Board:
         output = ''
         for line in self.board:
             for elem in line:
-                if elem == 0:
+                if elem == 0 or isinstance(elem, EmptyBrick):
                     output += ' '
                 else:
                     output += '*'
@@ -126,29 +126,90 @@ class Figure(Board):
                 else:
                     self.board[-1].append(1)
 
+        self.color = random.choice(['red', 'green', 'blue'])
         self.bricks = pygame.sprite.Group()
+        for y in range(len(self.board)):
+            for x in range(len(self.board[y])):
+                if self.board[y][x] == 1:
+                    brick = Brick(f'{self.color}_brick.png',
+                                  (self.cell_size * x, self.cell_size * y), self)
+                    self.bricks.add(brick)
+                else:
+                    brick = EmptyBrick((self.cell_size * x, self.cell_size * y), self)
+                self.board[y][x] = brick
 
-    def rotate(self):
-        print('rotate 90')
+        # центральный блок (вокруг него вращается фигура) изначально в позиции (0, 0)
+        self.center_index = (0, 0)
+        print(self)
+        self.center_brick = self.board[self.center_index[0]][self.center_index[1]]
+
+        self.update_bricks_pos()
+
+    def rotate_left(self):
         m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
-        for x in range(len(self.board)):
-            for y in range(len(self.board[0])):
-                y2 = x
-                x2 = len(self.board[0]) - y - 1
-                m2[x2][y2] = self.board[x][y]
+        for y in range(len(self.board)):
+            for x in range(len(self.board[0])):
+                x2 = y
+                y2 = len(self.board[0]) - x - 1
+                m2[y2][x2] = self.board[y][x]
+        
+        # просчитываем новую позицию центрального блока в матрице
+        self.center_index = (len(self.board[0]) - self.center_index[1] - 1,
+                             self.center_index[0])
         self.board = m2
+
+        self.update_bricks_pos()
+
+    def rotate_right(self):
+        for i in range(3):
+            self.rotate_left()
+
+    def update_bricks_pos(self):
+        """После поворотов переопределяем позиции блоков относительно центрального"""
+        x1 = self.center_index[1]
+        y1 = self.center_index[0]
+        for y in range(len(self.board)):
+            for x in range(len(self.board[y])):
+                self.board[y][x].pos = (self.cell_size * (x - x1),
+                                        self.cell_size * (y - y1))
+
+    def move_right(self):
+        self.left += self.cell_size
+
+    def move_left(self):
+        self.left -= self.cell_size
+
+    def render(self, screen):
+        self.bricks.update()
+        self.bricks.draw(screen)
 
 
 class Brick(pygame.sprite.Sprite):
-    def __init__(self, image, pos, fig):
+    def __init__(self, image, pos, fig, *group):
+        super().__init__(*group)
         self.image = load_image(image)
-        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (fig.cell_size, fig.cell_size))
+        self.rect = pygame.Rect(0, 0, fig.cell_size, fig.cell_size)
+        # pos - это позиция относительно левого верхнего края фигуры
         self.pos = pos
         self.fig = fig
 
     def update(self):
-        self.rect.x = self.fig.rect.x + self.pos[0]
-        self.rect.y = self.fig.rect.y + self.pos[1]
+        self.rect.x = self.fig.left + self.pos[0]
+        self.rect.y = self.fig.top + self.pos[1]
+
+
+# У него нет картинки и он не наследник класса pygame.sprite.Sprite,
+# но позиция определяется так же, как у Brick
+class EmptyBrick():
+    def __init__(self, pos, fig):
+        self.rect = pygame.Rect(0, 0, fig.cell_size, fig.cell_size)
+        self.pos = pos
+        self.fig = fig
+
+    def update(self):
+        self.rect.x = self.fig.left + self.pos[0]
+        self.rect.y = self.fig.top + self.pos[1]
 
 
 if __name__ == '__main__':
@@ -166,24 +227,18 @@ if __name__ == '__main__':
     pause = True
     start = False
     score = 0
+    with open('data/figures.txt') as file:
+        figs = file.read().split('\n\n')
+        figure = Figure(figs[random.randint(0, len(figs) - 1)])
+        figure.left = 100
+        figure.top = 100
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
             if event.type == pygame.KEYDOWN:
-                if not start:
-                    with open('data/figures.txt') as file:
-                        figs = file.read().split('\n\n')[:-1]
-                        figure = Figure(random.choice(figs))
-                        print(figure)
-                        figure.rotate()
-                        print(figure)
-                        figure.rotate()
-                        print(figure)
-                        figure.rotate()
-                        print(figure)
-                        figure.rotate()
                 start = True
                 if event.key == pygame.K_SPACE:
                     if pause:
@@ -193,20 +248,25 @@ if __name__ == '__main__':
                 elif event.key == pygame.K_KP_ENTER:
                     pause = True
                     start = False
+
+                # повернуть по часовой стрелке - K_UP
+                # повернуть против часовой стрелки - K_DOWN
+                # подвинуть вправо - K_RIGHT
+                # подвинуть влево - K_LEFT
+
+                if event.key == pygame.K_DOWN:
+                    figure.rotate_left()
+                    print(figure)
+                if event.key == pygame.K_UP:
+                    figure.rotate_right()
+                    print(figure)
+                if event.key == pygame.K_RIGHT:
+                    figure.move_right()
+                if event.key == pygame.K_LEFT:
+                    figure.move_left()
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button not in [4, 5]: # 4 и 5 - прокручивания мыши
-                    if not start:
-                        with open('data/figures.txt') as file:
-                            figs = file.read().split('\n\n')[:-1]
-                            figure = Figure(random.choice(figs))
-                            print(figure)
-                            figure.rotate()
-                            print(figure)
-                            figure.rotate()
-                            print(figure)
-                            figure.rotate()
-                            print(figure)
-                            figure.rotate()
                     if pause:
                         pause = False
                     elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
@@ -214,14 +274,15 @@ if __name__ == '__main__':
                     elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
                     start = False
-
-            # отрисовка экрана
-            if pause:
-                draw_standby_screen(screen)
-            else:
-                start = True
-                draw_field_of_play(screen)
+                    
         board.render(screen)
+        # отрисовка экрана
+        if pause:
+            draw_standby_screen(screen)
+        else:
+            start = True
+            draw_field_of_play(screen)
+            figure.render(screen)
         pygame.display.flip()
         clock.tick(fps)
     pygame.quit()
