@@ -1,13 +1,14 @@
 import pygame
 import random
+import time
 import os
 import sys
 
 
 def draw_field_of_play(scr):
-    scr.fill((0, 0, 0))
-
     # все линии, значки паузы и рестарта
+    pygame.draw.rect(scr, (0, 0, 0), (0, 0, 510, 75))
+
     pygame.draw.line(scr, (255, 255, 255), (0, 0), (0, 780), width=9)
     pygame.draw.line(scr, (255, 255, 255), (510, 0), (510, 780), width=10)
     pygame.draw.line(scr, (255, 255, 255), (0, 780), (510, 780), width=10)
@@ -67,7 +68,7 @@ class Board:
         self.board = []
         self.left = 10
         self.top = 10
-        self.cell_size = 30
+        self.cell_size = 50
         self.move = 0
         self.is_game = True
 
@@ -152,7 +153,7 @@ class Figure(Board):
                 x2 = y
                 y2 = len(self.board[0]) - x - 1
                 m2[y2][x2] = self.board[y][x]
-        
+
         # просчитываем новую позицию центрального блока в матрице
         self.center_index = (len(self.board[0]) - self.center_index[1] - 1,
                              self.center_index[0])
@@ -231,7 +232,9 @@ if __name__ == '__main__':
         figs = file.read().split('\n\n')
         figure = Figure(figs[random.randint(0, len(figs) - 1)])
         figure.left = 100
-        figure.top = 100
+        figure.top = 75
+
+    MOVING = pygame.USEREVENT + 1
 
     while running:
         for event in pygame.event.get():
@@ -239,7 +242,13 @@ if __name__ == '__main__':
                 running = False
 
             if event.type == pygame.KEYDOWN:
-                start = True
+                if not start:
+                    start = True
+                    with open('data/figures.txt') as file:
+                        figs = file.read().split('\n\n')
+                        figure = Figure(figs[random.randint(0, len(figs) - 1)])
+                        figure.left = 105
+                        figure.top = 75
                 if event.key == pygame.K_SPACE:
                     if pause:
                         pause = False
@@ -266,23 +275,40 @@ if __name__ == '__main__':
                     figure.move_left()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button not in [4, 5]: # 4 и 5 - прокручивания мыши
+                if event.button not in [4, 5]:  # 4 и 5 - прокручивания мыши
                     if pause:
                         pause = False
+                        if not start:
+                            start = True
+                            with open('data/figures.txt') as file:
+                                figs = file.read().split('\n\n')
+                                figure = Figure(figs[random.randint(0, len(figs) - 1)])
+                                figure.left = 105
+                                figure.top = 75
                     elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
                     elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
-                    start = False
-                    
+                        start = False
+
+            if pause:
+                pygame.time.set_timer(MOVING, 0)
+            else:
+                pygame.time.set_timer(MOVING, 1000)
+
+            if event.type == MOVING:
+                figure.top += 25
+
         board.render(screen)
+
         # отрисовка экрана
         if pause:
             draw_standby_screen(screen)
         else:
             start = True
-            draw_field_of_play(screen)
+            screen.fill((0, 0, 0))
             figure.render(screen)
+            draw_field_of_play(screen)
         pygame.display.flip()
         clock.tick(fps)
     pygame.quit()
