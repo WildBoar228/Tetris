@@ -127,7 +127,7 @@ class Figure(Board):
                 else:
                     self.board[-1].append(1)
 
-        self.color = random.choice(['red', 'green', 'blue'])
+        self.color = random.choice(['red', 'green', 'blue', 'yellow', 'cian', 'purple'])
         self.bricks = pygame.sprite.Group()
         for y in range(len(self.board)):
             for x in range(len(self.board[y])):
@@ -175,10 +175,12 @@ class Figure(Board):
                                         self.cell_size * (y - y1))
 
     def move_right(self):
-        self.left += self.cell_size
+        if self.left < 450:
+            self.left += self.cell_size
 
     def move_left(self):
-        self.left -= self.cell_size
+        if self.left > 5:
+            self.left -= self.cell_size
 
     def render(self, screen):
         self.bricks.update()
@@ -312,4 +314,3 @@ if __name__ == '__main__':
         pygame.display.flip()
         clock.tick(fps)
     pygame.quit()
-
