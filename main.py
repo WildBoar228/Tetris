@@ -60,14 +60,24 @@ def load_image(name, colorkey=None):
     return image
 
 
+def create_new_fig():
+    with open('data/figures.txt') as file:
+        figs = file.read().split('\n\n')
+        figure = Figure(figs[random.randint(0, len(figs) - 1)])
+        figure.left = 100
+        figure.top = 100
+    return figure
+
+
 class Board:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.board = []
         self.left = 10
         self.top = 10
         self.cell_size = 30
+        self.board = []
+        self.bricks = pygame.sprite.Group()
         self.move = 0
         self.is_game = True
 
@@ -77,21 +87,11 @@ class Board:
         self.cell_size = cell_size
 
     def render(self, screen):
-        for x in range(self.width):
-            for y in range(self.height):
-                pygame.draw.rect(screen, pygame.Color('white'),
-                                 pygame.Rect(self.left + self.cell_size * x,
-                                             self.top + self.cell_size * y,
-                                             self.cell_size, self.cell_size),
-                                 width=1)
+        self.bricks.draw(screen)
 
-    def get_cell(self, mouse_pos):
-        if mouse_pos[0] < self.left or mouse_pos[0] > self.left + self.width * self.cell_size:
-            return None
-        if mouse_pos[1] < self.top or mouse_pos[1] > self.top + self.height * self.cell_size:
-            return None
-        x_coord = (mouse_pos[0] - self.left) // self.cell_size
-        y_coord = (mouse_pos[1] - self.top) // self.cell_size
+    def get_cell(self, pos):
+        x_coord = (pos[0] - self.left) // self.cell_size
+        y_coord = (pos[1] - self.top) // self.cell_size
         return (x_coord, y_coord)
 
     def on_click(self, cell_coords):
@@ -115,7 +115,7 @@ class Board:
 
 
 class Figure(Board):
-    def __init__(self, form):
+    def __init__(self, form, speed=100):
         super().__init__(len(form.split('\n')), len(form.split('\n')[0]))
 
         for line in form.split('\n'):
@@ -143,7 +143,26 @@ class Figure(Board):
         print(self)
         self.center_brick = self.board[self.center_index[0]][self.center_index[1]]
 
+        self.speed = speed
+
         self.update_bricks_pos()
+
+    def update(self, fps):
+        self.bricks.update()
+
+        self.top += self.speed / fps
+
+        stop = self.bottom_border() >= screen.get_height()
+        print(self.bottom_border(), screen.get_height())
+        print(stop)
+        for brick in self.bricks:
+            if pygame.sprite.spritecollideany(brick, board.bricks):
+                stop = True
+                break
+        print(stop)
+        print()
+        if stop:
+            self.join_to_board()
 
     def rotate_left(self):
         m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
@@ -160,8 +179,25 @@ class Figure(Board):
 
         self.update_bricks_pos()
 
+        if self.left_border() < 0 or self.right_border() > screen.get_width():
+            self.rotate_right()
+
     def rotate_right(self):
-        for i in range(3):
+        m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
+        for y in range(len(self.board)):
+            for x in range(len(self.board[0])):
+                x2 = len(self.board) - y - 1
+                y2 = x
+                m2[y2][x2] = self.board[y][x]
+        
+        # просчитываем новую позицию центрального блока в матрице
+        self.center_index = (self.center_index[1],
+                             len(self.board) - self.center_index[0] - 1)
+        self.board = m2
+
+        self.update_bricks_pos()
+
+        if self.left_border() < 0 or self.right_border() > screen.get_width():
             self.rotate_left()
 
     def update_bricks_pos(self):
@@ -174,14 +210,45 @@ class Figure(Board):
                                         self.cell_size * (y - y1))
 
     def move_right(self):
+        if self.right_border() + self.cell_size > screen.get_width():
+            print('wall')
+            return
         self.left += self.cell_size
 
     def move_left(self):
+        if self.left_border() - self.cell_size < 0:
+            print('wall')
+            return
         self.left -= self.cell_size
 
     def render(self, screen):
         self.bricks.update()
         self.bricks.draw(screen)
+    
+    def left_border(self):
+        br = [(brick, brick.pos[0] + self.left) for brick in self.bricks]
+        return min(br, key=lambda b: b[1])[1]
+
+    def right_border(self):
+        br = [(brick, brick.pos[0] + self.left + self.cell_size) for brick in self.bricks]
+        return max(br, key=lambda b: b[1])[1]
+
+    def top_border(self):
+        br = [(brick, brick.pos[1] + self.top) for brick in self.bricks]
+        return min(br, key=lambda b: b[1])[1]
+
+    def bottom_border(self):
+        br = [(brick, brick.pos[1] + self.top + self.cell_size) for brick in self.bricks]
+        return max(br, key=lambda b: b[1])[1]
+
+    def join_to_board(self):
+        for brick in self.bricks:
+            index = board.get_cell((brick.pos[0] + self.cell_size // 2 + self.left,
+                                    brick.pos[1] + self.cell_size // 2 + self.top))
+            board.board[int(index[1])][int(index[0])] = brick
+            board.bricks.add(brick)
+        self.board = []
+        self.bricks = pygame.sprite.Group()
 
 
 class Brick(pygame.sprite.Sprite):
@@ -221,17 +288,14 @@ if __name__ == '__main__':
 
     board = Board(10, 20)
     board.set_view(0, 0, 30)
+    board.board = [[0 for i in range(100)] for i in range(100)]
     fps = 50
     clock = pygame.time.Clock()
     running = True
     pause = True
     start = False
     score = 0
-    with open('data/figures.txt') as file:
-        figs = file.read().split('\n\n')
-        figure = Figure(figs[random.randint(0, len(figs) - 1)])
-        figure.left = 100
-        figure.top = 100
+    figure = create_new_fig()
 
     while running:
         for event in pygame.event.get():
@@ -282,7 +346,11 @@ if __name__ == '__main__':
         else:
             start = True
             draw_field_of_play(screen)
+            if len(figure.bricks) <= 0:
+                figure = create_new_fig()
+            figure.update(fps)
             figure.render(screen)
+            board.render(screen)
         pygame.display.flip()
         clock.tick(fps)
     pygame.quit()
