@@ -1,13 +1,14 @@
 import pygame
 import random
+import time
 import os
 import sys
 
 
 def draw_field_of_play(scr):
-    scr.fill((0, 0, 0))
-
     # все линии, значки паузы и рестарта
+    pygame.draw.rect(scr, (0, 0, 0), (0, 0, 510, 75))
+
     pygame.draw.line(scr, (255, 255, 255), (0, 0), (0, 780), width=9)
     pygame.draw.line(scr, (255, 255, 255), (510, 0), (510, 780), width=10)
     pygame.draw.line(scr, (255, 255, 255), (0, 780), (510, 780), width=10)
@@ -126,7 +127,7 @@ class Figure(Board):
                 else:
                     self.board[-1].append(1)
 
-        self.color = random.choice(['red', 'green', 'blue'])
+        self.color = random.choice(['red', 'green', 'blue', 'yellow', 'cian', 'purple'])
         self.bricks = pygame.sprite.Group()
         for y in range(len(self.board)):
             for x in range(len(self.board[y])):
@@ -150,7 +151,7 @@ class Figure(Board):
     def update(self, fps):
         self.bricks.update()
 
-        self.top += self.speed / fps
+        # self.top += self.speed / fps
 
         stop = self.bottom_border() >= screen.get_height()
         print(self.bottom_border(), screen.get_height())
@@ -171,7 +172,7 @@ class Figure(Board):
                 x2 = y
                 y2 = len(self.board[0]) - x - 1
                 m2[y2][x2] = self.board[y][x]
-        
+
         # просчитываем новую позицию центрального блока в матрице
         self.center_index = (len(self.board[0]) - self.center_index[1] - 1,
                              self.center_index[0])
@@ -297,13 +298,21 @@ if __name__ == '__main__':
     score = 0
     figure = create_new_fig()
 
+    MOVING = pygame.USEREVENT + 1
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
             if event.type == pygame.KEYDOWN:
-                start = True
+                if not start:
+                    start = True
+                    with open('data/figures.txt') as file:
+                        figs = file.read().split('\n\n')
+                        figure = Figure(figs[random.randint(0, len(figs) - 1)])
+                        figure.left = 105
+                        figure.top = 75
                 if event.key == pygame.K_SPACE:
                     if pause:
                         pause = False
@@ -330,21 +339,35 @@ if __name__ == '__main__':
                     figure.move_left()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button not in [4, 5]: # 4 и 5 - прокручивания мыши
+                if event.button not in [4, 5]:  # 4 и 5 - прокручивания мыши
                     if pause:
                         pause = False
+                        if not start:
+                            start = True
+                            figure = create_new_fig()
                     elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
                     elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
-                    start = False
-                    
+                        start = False
+
+            if pause:
+                pygame.time.set_timer(MOVING, 0)
+            else:
+                pygame.time.set_timer(MOVING, 1000)
+
+            if event.type == MOVING:
+                figure.top += 30
+
         board.render(screen)
+
         # отрисовка экрана
         if pause:
             draw_standby_screen(screen)
         else:
             start = True
+            screen.fill((0, 0, 0))
+            figure.render(screen)
             draw_field_of_play(screen)
             if len(figure.bricks) <= 0:
                 figure = create_new_fig()
@@ -354,4 +377,3 @@ if __name__ == '__main__':
         pygame.display.flip()
         clock.tick(fps)
     pygame.quit()
-
