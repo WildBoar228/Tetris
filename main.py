@@ -65,7 +65,7 @@ def create_new_fig():
     with open('data/figures.txt') as file:
         figs = file.read().split('\n\n')
         figure = Figure(figs[random.randint(0, len(figs) - 1)])
-        figure.left = 100
+        figure.left = 90
         figure.top = 100
     return figure
 
@@ -88,6 +88,7 @@ class Board:
         self.cell_size = cell_size
 
     def render(self, screen):
+        self.bricks.update()
         self.bricks.draw(screen)
 
     def get_cell(self, pos):
@@ -151,18 +152,9 @@ class Figure(Board):
     def update(self, fps):
         self.bricks.update()
 
-        # self.top += self.speed / fps
+        self.top += self.speed / fps
 
-        stop = self.bottom_border() >= screen.get_height()
-        print(self.bottom_border(), screen.get_height())
-        print(stop)
-        for brick in self.bricks:
-            if pygame.sprite.spritecollideany(brick, board.bricks):
-                stop = True
-                break
-        print(stop)
-        print()
-        if stop:
+        if self.bottom_border() >= screen.get_height() or self.is_touching_board():
             self.join_to_board()
 
     def rotate_left(self):
@@ -179,8 +171,12 @@ class Figure(Board):
         self.board = m2
 
         self.update_bricks_pos()
+        self.bricks.update()
 
         if self.left_border() < 0 or self.right_border() > screen.get_width():
+            self.rotate_right()
+
+        if self.is_touching_board():
             self.rotate_right()
 
     def rotate_right(self):
@@ -197,8 +193,12 @@ class Figure(Board):
         self.board = m2
 
         self.update_bricks_pos()
+        self.bricks.update()
 
         if self.left_border() < 0 or self.right_border() > screen.get_width():
+            self.rotate_left()
+
+        if self.is_touching_board():
             self.rotate_left()
 
     def update_bricks_pos(self):
@@ -215,15 +215,28 @@ class Figure(Board):
             print('wall')
             return
         self.left += self.cell_size
+        self.update_bricks_pos()
+        self.bricks.update()
+
+        print(1)
+        if self.is_touching_board():
+            print(2)
+            self.move_left()
 
     def move_left(self):
         if self.left_border() - self.cell_size < 0:
             print('wall')
             return
         self.left -= self.cell_size
+        self.update_bricks_pos()
+        self.bricks.update()
+        
+        print(1)
+        if self.is_touching_board():
+            print(2)
+            self.move_right()
 
     def render(self, screen):
-        self.bricks.update()
         self.bricks.draw(screen)
     
     def left_border(self):
@@ -244,12 +257,23 @@ class Figure(Board):
 
     def join_to_board(self):
         for brick in self.bricks:
-            index = board.get_cell((brick.pos[0] + self.cell_size // 2 + self.left,
-                                    brick.pos[1] + self.cell_size // 2 + self.top))
+            index = board.get_cell((brick.pos[0] + self.cell_size // 2 + self.left + self.center_index[0],
+                                    brick.pos[1] + self.cell_size // 2 + self.top + self.center_index[1]))
+            print(index)
             board.board[int(index[1])][int(index[0])] = brick
+            brick.pos = (index[0] * self.cell_size, index[1] * self.cell_size)
+            brick.fig = board
             board.bricks.add(brick)
         self.board = []
         self.bricks = pygame.sprite.Group()
+
+    def is_touching_board(self):
+        stop = False
+        for brick in self.bricks:
+            if pygame.sprite.spritecollideany(brick, board.bricks):
+                stop = True
+                break
+        return stop
 
 
 class Brick(pygame.sprite.Sprite):
@@ -298,7 +322,7 @@ if __name__ == '__main__':
     score = 0
     figure = create_new_fig()
 
-    MOVING = pygame.USEREVENT + 1
+    # MOVING = pygame.USEREVENT + 1
 
     while running:
         for event in pygame.event.get():
@@ -351,13 +375,13 @@ if __name__ == '__main__':
                         pause = True
                         start = False
 
-            if pause:
+            '''if pause:
                 pygame.time.set_timer(MOVING, 0)
             else:
                 pygame.time.set_timer(MOVING, 1000)
 
             if event.type == MOVING:
-                figure.top += 30
+                figure.top += 30'''
 
         board.render(screen)
 
