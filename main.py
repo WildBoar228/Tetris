@@ -70,6 +70,11 @@ def create_new_fig():
     return figure
 
 
+def add_score(sc):
+    global score
+    score += sc
+
+
 class Board:
     def __init__(self, width, height):
         self.width = width
@@ -88,6 +93,19 @@ class Board:
         self.cell_size = cell_size
 
     def render(self, screen):
+        for y in range(26):
+            if all(self.board[y]):
+                print(1234)
+                for brick in self.board[y]:
+                    self.bricks.remove(brick)
+                    add_score(10)
+                self.board[y] = [0 for i in range(len(self.board[y]))]
+                for i in range(y, 0, -1):
+                    self.board[i] = self.board[i - 1]
+                    for brick in self.board[i]:
+                        if isinstance(brick, Brick):
+                            brick.pos = (brick.pos[0], brick.pos[1] + self.cell_size)
+
         self.bricks.update()
         self.bricks.draw(screen)
 
@@ -218,9 +236,7 @@ class Figure(Board):
         self.update_bricks_pos()
         self.bricks.update()
 
-        print(1)
         if self.is_touching_board():
-            print(2)
             self.move_left()
 
     def move_left(self):
@@ -231,28 +247,26 @@ class Figure(Board):
         self.update_bricks_pos()
         self.bricks.update()
         
-        print(1)
         if self.is_touching_board():
-            print(2)
             self.move_right()
 
     def render(self, screen):
         self.bricks.draw(screen)
     
     def left_border(self):
-        br = [(brick, brick.pos[0] + self.left) for brick in self.bricks]
+        br = [(brick, brick.pos[0] + self.left) for brick in self.bricks if brick is not None]
         return min(br, key=lambda b: b[1])[1]
 
     def right_border(self):
-        br = [(brick, brick.pos[0] + self.left + self.cell_size) for brick in self.bricks]
+        br = [(brick, brick.pos[0] + self.left + self.cell_size) for brick in self.bricks if brick is not None]
         return max(br, key=lambda b: b[1])[1]
 
     def top_border(self):
-        br = [(brick, brick.pos[1] + self.top) for brick in self.bricks]
+        br = [(brick, brick.pos[1] + self.top) for brick in self.bricks if brick is not None]
         return min(br, key=lambda b: b[1])[1]
 
     def bottom_border(self):
-        br = [(brick, brick.pos[1] + self.top + self.cell_size) for brick in self.bricks]
+        br = [(brick, brick.pos[1] + self.top + self.cell_size) for brick in self.bricks if brick is not None]
         return max(br, key=lambda b: b[1])[1]
 
     def join_to_board(self):
@@ -313,14 +327,13 @@ if __name__ == '__main__':
 
     board = Board(10, 20)
     board.set_view(0, 0, 30)
-    board.board = [[0 for i in range(100)] for i in range(100)]
+    board.board = [[0 for i in range(17)] for i in range(100)]
     fps = 50
     clock = pygame.time.Clock()
     running = True
     pause = True
     start = False
     score = 0
-    figure = create_new_fig()
 
     # MOVING = pygame.USEREVENT + 1
 
@@ -332,11 +345,7 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN:
                 if not start:
                     start = True
-                    with open('data/figures.txt') as file:
-                        figs = file.read().split('\n\n')
-                        figure = Figure(figs[random.randint(0, len(figs) - 1)])
-                        figure.left = 105
-                        figure.top = 75
+                    figure = create_new_fig()
                 if event.key == pygame.K_SPACE:
                     if pause:
                         pause = False
