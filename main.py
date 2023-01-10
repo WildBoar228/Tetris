@@ -6,27 +6,39 @@ import sys
 
 
 def draw_field_of_play(scr):
+    if bg:
+        name = os.path.join('background', f'bg_{bg}.jpg')
+        image = pygame.image.load(name)
+        all_sprites = pygame.sprite.Group()
+        arrow = pygame.sprite.Sprite(all_sprites)
+        arrow.image = image
+        arrow.rect = arrow.image.get_rect()
+        all_sprites.add(arrow)
+        arrow.rect.x = 0
+        arrow.rect.y = 0
+        all_sprites.draw(screen)
+
     # все линии, значки паузы и рестарта
     pygame.draw.rect(scr, (0, 0, 0), (0, 0, 510, 75))
 
-    pygame.draw.line(scr, (255, 255, 255), (0, 0), (0, 780), width=9)
-    pygame.draw.line(scr, (255, 255, 255), (510, 0), (510, 780), width=10)
-    pygame.draw.line(scr, (255, 255, 255), (0, 780), (510, 780), width=10)
+    pygame.draw.line(scr, color, (0, 0), (0, 780), width=9)
+    pygame.draw.line(scr, color, (510, 0), (510, 780), width=10)
+    pygame.draw.line(scr, color, (0, 780), (510, 780), width=10)
 
-    pygame.draw.line(scr, (255, 255, 255), (0, 72), (510, 72), width=5)
-    pygame.draw.line(scr, (255, 255, 255), (77, 0), (77, 72), width=5)
-    pygame.draw.line(scr, (255, 255, 255), (432, 0), (432, 72), width=5)
+    pygame.draw.line(scr, color, (0, 72), (510, 72), width=5)
+    pygame.draw.line(scr, color, (77, 0), (77, 72), width=5)
+    pygame.draw.line(scr, color, (432, 0), (432, 72), width=5)
 
-    pygame.draw.rect(scr, (255, 255, 255), (20, 15, 15, 40))
-    pygame.draw.rect(scr, (255, 255, 255), (45, 15, 15, 40))
+    pygame.draw.rect(scr, color, (20, 15, 15, 40))
+    pygame.draw.rect(scr, color, (45, 15, 15, 40))
 
-    pygame.draw.circle(scr, (255, 255, 255), (467, 35), 25, width=14)
+    pygame.draw.circle(scr, color, (467, 35), 25, width=14)
     pygame.draw.rect(scr, (0, 0, 0), (467, 35, 25, 25))
-    pygame.draw.polygon(scr, (255, 255, 255), ((472, 35), (498, 35), (485, 48)))
+    pygame.draw.polygon(scr, color, ((472, 35), (498, 35), (485, 48)))
 
     # ведение счёта
     font = pygame.font.Font(None, 80)
-    text = font.render(str(score), True, (255, 255, 255))
+    text = font.render(str(score), True, color)
     text_x = width // 2 - text.get_width() // 2
     scr.blit(text, (text_x, 10))
 
@@ -34,14 +46,42 @@ def draw_field_of_play(scr):
 # экран паузы/стартовый экран
 def draw_standby_screen(scr):
     scr.fill((0, 0, 0))
+    if bg:
+        name = os.path.join('background', f'bg_{bg}.jpg')
+        image = pygame.image.load(name)
+        all_sprites = pygame.sprite.Group()
+        arrow = pygame.sprite.Sprite(all_sprites)
+        arrow.image = image
+        arrow.rect = arrow.image.get_rect()
+        all_sprites.add(arrow)
+        arrow.rect.x = 0
+        arrow.rect.y = 0
+        all_sprites.draw(screen)
     font = pygame.font.Font(None, 90)
     if start:
-        text = font.render('Пауза', True, (255, 255, 255))
+        text = font.render('Пауза', True, color)
     else:
-        text = font.render('Старт', True, (255, 255, 255))
+        text = font.render('Старт', True, color)
     text_x = width // 2 - text.get_width() // 2
-    scr.blit(text, (text_x, 300))
-    pygame.draw.polygon(scr, (255, 255, 255), ((230, 400), (270, 420), (230, 440)))
+    scr.blit(text, (text_x, 150))
+    pygame.draw.polygon(scr, color, ((230, 250), (270, 270), (230, 290)))
+
+    pygame.draw.line(scr, color, (0, 440), (510, 440), 3)
+    pygame.draw.line(scr, color, (255, 440), (255, 780), 3)
+    font = pygame.font.Font(None, 30)
+
+    text = font.render('Выбор фона', True, color)
+    text_x = width // 4 - text.get_width() // 2
+    scr.blit(text, (text_x, 470))
+    pygame.draw.polygon(scr, color, ((220, 600), (240, 610), (220, 620)))
+    pygame.draw.polygon(scr, color, ((40, 600), (20, 610), (40, 620)))
+
+    text = font.render('Выбор цвета', True, color)
+    text_x = width // 4 - text.get_width() // 2
+    scr.blit(text, (text_x + width // 2, 470))
+    pygame.draw.polygon(scr, color, ((470, 600), (490, 610), (470, 620)))
+    pygame.draw.polygon(scr, color, ((290, 600), (270, 610), (290, 620)))
+    pygame.draw.circle(scr, color, (382, 610), 30)
 
 
 def load_image(name, colorkey=None):
@@ -204,7 +244,7 @@ class Figure(Board):
                 x2 = len(self.board) - y - 1
                 y2 = x
                 m2[y2][x2] = self.board[y][x]
-        
+
         # просчитываем новую позицию центрального блока в матрице
         self.center_index = (self.center_index[1],
                              len(self.board) - self.center_index[0] - 1)
@@ -246,13 +286,13 @@ class Figure(Board):
         self.left -= self.cell_size
         self.update_bricks_pos()
         self.bricks.update()
-        
+
         if self.is_touching_board():
             self.move_right()
 
     def render(self, screen):
         self.bricks.draw(screen)
-    
+
     def left_border(self):
         br = [(brick, brick.pos[0] + self.left) for brick in self.bricks if brick is not None]
         return min(br, key=lambda b: b[1])[1]
@@ -334,6 +374,8 @@ if __name__ == '__main__':
     pause = True
     start = False
     score = 0
+    color = (255, 255, 255)
+    bg = 0
 
     # MOVING = pygame.USEREVENT + 1
 
@@ -341,7 +383,6 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
             if event.type == pygame.KEYDOWN:
                 if not start:
                     start = True
@@ -374,10 +415,51 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button not in [4, 5]:  # 4 и 5 - прокручивания мыши
                     if pause:
-                        pause = False
-                        if not start:
-                            start = True
-                            figure = create_new_fig()
+                        if event.pos[0] > 382 and event.pos[0] < 510 and event.pos[1] > 440 and event.pos[1] < 780:
+                            if color == (255, 255, 255):
+                                color = (255, 0, 0)
+                            elif color == (255, 0, 0):
+                                color = (0, 255, 0)
+                            elif color == (0, 255, 0):
+                                color = (0, 0, 255)
+                            elif color == (0, 0, 255):
+                                color = (0, 255, 255)
+                            elif color == (0, 255, 255):
+                                color = (255, 255, 0)
+                            elif color == (255, 255, 0):
+                                color = (255, 0, 255)
+                            else:
+                                color = (255, 255, 255)
+                        if event.pos[0] > 255 and event.pos[0] < 382 and event.pos[1] > 440 and event.pos[1] < 780:
+                            if color == (255, 255, 255):
+                                color = (255, 0, 255)
+                            elif color == (255, 0, 0):
+                                color = (255, 255, 255)
+                            elif color == (0, 255, 0):
+                                color = (255, 0, 0)
+                            elif color == (0, 0, 255):
+                                color = (0, 255, 0)
+                            elif color == (0, 255, 255):
+                                color = (0, 0, 255)
+                            elif color == (255, 255, 0):
+                                color = (0, 255, 255)
+                            else:
+                                color = (255, 255, 0)
+                        if event.pos[0] > 0 and event.pos[0] < 127 and event.pos[1] > 440 and event.pos[1] < 780:
+                            if not bg:
+                                bg = 6
+                            else:
+                                bg -= 1
+                        if event.pos[0] > 127 and event.pos[0] < 255 and event.pos[1] > 440 and event.pos[1] < 780:
+                            if bg == 6:
+                                bg = 0
+                            else:
+                                bg += 1
+                        if event.pos[1] < 440:
+                            pause = False
+                            if not start:
+                                start = True
+                                figure = create_new_fig()
                     elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
                     elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
