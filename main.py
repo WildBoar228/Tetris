@@ -26,6 +26,7 @@ def draw_field_of_play(scr):
     pygame.draw.line(scr, color, (0, 780), (510, 780), width=10)
 
     pygame.draw.line(scr, color, (0, 72), (510, 72), width=5)
+    pygame.draw.line(scr, (255, 0, 0), (0, 190), (510, 190), width=5)
     pygame.draw.line(scr, color, (77, 0), (77, 72), width=5)
     pygame.draw.line(scr, color, (432, 0), (432, 72), width=5)
 
@@ -115,6 +116,15 @@ def add_score(sc):
     score += sc
 
 
+def new_game():
+    global score
+    score = 0
+    board.is_game = True
+    board.board = [[0 for i in range(17)] for i in range(100)]
+    board.bricks = pygame.sprite.Group()
+    create_new_fig()
+
+
 class Board:
     def __init__(self, width, height):
         self.width = width
@@ -138,7 +148,7 @@ class Board:
                 print(1234)
                 for brick in self.board[y]:
                     self.bricks.remove(brick)
-                    add_score(10)
+                    add_score(brick.price)
                 self.board[y] = [0 for i in range(len(self.board[y]))]
                 for i in range(y, 0, -1):
                     self.board[i] = self.board[i - 1]
@@ -311,6 +321,8 @@ class Figure(Board):
 
     def join_to_board(self):
         for brick in self.bricks:
+            if brick.rect.y < 190:
+                board.is_game = False
             index = board.get_cell((brick.pos[0] + self.cell_size // 2 + self.left + self.center_index[0],
                                     brick.pos[1] + self.cell_size // 2 + self.top + self.center_index[1]))
             print(index)
@@ -333,7 +345,20 @@ class Figure(Board):
 class Brick(pygame.sprite.Sprite):
     def __init__(self, image, pos, fig, *group):
         super().__init__(*group)
-        self.image = load_image(image)
+
+        if random.randint(1, 10) == 1:
+            self.price = 30
+            self.image = load_image('golden_brick1.png')
+            self.image_index = 0
+            self.images = [load_image('golden_brick1.png'),
+                           load_image('golden_brick2.png'),
+                           load_image('golden_brick3.png')]
+            for i in range(len(self.images)):
+                self.images[i] = pygame.transform.scale(self.images[i], (fig.cell_size, fig.cell_size))
+            self.last_change_time = time.time()
+        else:
+            self.price = 10
+            self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, (fig.cell_size, fig.cell_size))
         self.rect = pygame.Rect(0, 0, fig.cell_size, fig.cell_size)
         # pos - это позиция относительно левого верхнего края фигуры
@@ -343,6 +368,12 @@ class Brick(pygame.sprite.Sprite):
     def update(self):
         self.rect.x = self.fig.left + self.pos[0]
         self.rect.y = self.fig.top + self.pos[1]
+
+        if self.price == 30 and time.time() - self.last_change_time > 0.5:
+            self.image_index += 1
+            self.image_index %= len(self.images)
+            self.last_change_time = time.time()
+            self.image = self.images[self.image_index]
 
 
 # У него нет картинки и он не наследник класса pygame.sprite.Sprite,
@@ -393,6 +424,7 @@ if __name__ == '__main__':
                     else:
                         pause = True
                 elif event.key == pygame.K_KP_ENTER:
+                    new_game()
                     pause = True
                     start = False
 
@@ -401,16 +433,17 @@ if __name__ == '__main__':
                 # подвинуть вправо - K_RIGHT
                 # подвинуть влево - K_LEFT
 
-                if event.key == pygame.K_DOWN:
-                    figure.rotate_left()
-                    print(figure)
-                if event.key == pygame.K_UP:
-                    figure.rotate_right()
-                    print(figure)
-                if event.key == pygame.K_RIGHT:
-                    figure.move_right()
-                if event.key == pygame.K_LEFT:
-                    figure.move_left()
+                if board.is_game:
+                    if event.key == pygame.K_DOWN:
+                        figure.rotate_left()
+                        print(figure)
+                    if event.key == pygame.K_UP:
+                        figure.rotate_right()
+                        print(figure)
+                    if event.key == pygame.K_RIGHT:
+                        figure.move_right()
+                    if event.key == pygame.K_LEFT:
+                        figure.move_left()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button not in [4, 5]:  # 4 и 5 - прокручивания мыши
@@ -463,6 +496,7 @@ if __name__ == '__main__':
                     elif event.pos[0] > 0 and event.pos[0] < 75 and event.pos[1] > 0 and event.pos[1] < 70:
                         pause = True
                     elif event.pos[0] > 435 and event.pos[0] < 510 and event.pos[1] > 0 and event.pos[1] < 70:
+                        new_game()
                         pause = True
                         start = False
 
@@ -474,8 +508,6 @@ if __name__ == '__main__':
             if event.type == MOVING:
                 figure.top += 30'''
 
-        board.render(screen)
-
         # отрисовка экрана
         if pause:
             draw_standby_screen(screen)
@@ -486,9 +518,18 @@ if __name__ == '__main__':
             draw_field_of_play(screen)
             if len(figure.bricks) <= 0:
                 figure = create_new_fig()
-            figure.update(fps)
-            figure.render(screen)
             board.render(screen)
+            if board.is_game:
+                figure.update(fps)
+                figure.render(screen)
+
+        # Оповещение о проигрыше
+        if not board.is_game:
+            font = pygame.font.Font(None, 80)
+            text = font.render('GAME OVER', True, (237, 28, 36))
+            text_x = width // 2 - text.get_width() // 2
+            screen.blit(text, (text_x, 250))
+
         pygame.display.flip()
         clock.tick(fps)
     pygame.quit()
