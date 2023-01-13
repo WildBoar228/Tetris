@@ -226,48 +226,56 @@ class Figure(Board):
             self.join_to_board()
 
     def rotate_left(self):
-        m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
-        for y in range(len(self.board)):
-            for x in range(len(self.board[0])):
-                x2 = y
-                y2 = len(self.board[0]) - x - 1
-                m2[y2][x2] = self.board[y][x]
+        try:
+            if self.top < 630:
+                m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
+                for y in range(len(self.board)):
+                    for x in range(len(self.board[0])):
+                        x2 = y
+                        y2 = len(self.board[0]) - x - 1
+                        m2[y2][x2] = self.board[y][x]
 
-        # просчитываем новую позицию центрального блока в матрице
-        self.center_index = (len(self.board[0]) - self.center_index[1] - 1,
-                             self.center_index[0])
-        self.board = m2
+                # просчитываем новую позицию центрального блока в матрице
+                self.center_index = (len(self.board[0]) - self.center_index[1] - 1,
+                                     self.center_index[0])
+                self.board = m2
 
-        self.update_bricks_pos()
-        self.bricks.update()
+                self.update_bricks_pos()
+                self.bricks.update()
 
-        if self.left_border() < 0 or self.right_border() > screen.get_width():
-            self.rotate_right()
+                if self.left_border() < 0 or self.right_border() > screen.get_width():
+                    self.rotate_right()
 
-        if self.is_touching_board():
-            self.rotate_right()
+                if self.is_touching_board():
+                    self.rotate_right()
+        except IndexError:
+            pass
 
     def rotate_right(self):
-        m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
-        for y in range(len(self.board)):
-            for x in range(len(self.board[0])):
-                x2 = len(self.board) - y - 1
-                y2 = x
-                m2[y2][x2] = self.board[y][x]
+        try:
+            if self.top < 630:
+                m2 = [[0 for i in range(len(self.board))] for i in range(len(self.board[0]))]
+                for y in range(len(self.board)):
+                    for x in range(len(self.board[0])):
+                        x2 = len(self.board) - y - 1
+                        y2 = x
+                        m2[y2][x2] = self.board[y][x]
 
-        # просчитываем новую позицию центрального блока в матрице
-        self.center_index = (self.center_index[1],
-                             len(self.board) - self.center_index[0] - 1)
-        self.board = m2
+                # просчитываем новую позицию центрального блока в матрице
+                self.center_index = (self.center_index[1],
+                                     len(self.board) - self.center_index[0] - 1)
+                self.board = m2
 
-        self.update_bricks_pos()
-        self.bricks.update()
+                self.update_bricks_pos()
+                self.bricks.update()
 
-        if self.left_border() < 0 or self.right_border() > screen.get_width():
-            self.rotate_left()
+                if self.left_border() < 0 or self.right_border() > screen.get_width():
+                    self.rotate_left()
 
-        if self.is_touching_board():
-            self.rotate_left()
+                if self.is_touching_board():
+                    self.rotate_left()
+        except IndexError:
+            pass
 
     def update_bricks_pos(self):
         """После поворотов переопределяем позиции блоков относительно центрального"""
