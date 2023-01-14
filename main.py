@@ -106,7 +106,8 @@ def create_new_fig():
     with open('data/figures.txt') as file:
         figs = file.read().split('\n\n')
         figure = Figure(figs[random.randint(0, len(figs) - 1)])
-        figure.left = 90
+        w = len(figure.board[0]) * figure.cell_size
+        figure.left = (width / 2 - w / 2) // board.cell_size * board.cell_size
         figure.top = 100
     return figure
 
@@ -163,14 +164,6 @@ class Board:
         x_coord = (pos[0] - self.left) // self.cell_size
         y_coord = (pos[1] - self.top) // self.cell_size
         return (x_coord, y_coord)
-
-    def on_click(self, cell_coords):
-        pass
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        if cell is not None:
-            self.on_click(cell)
 
     def __str__(self):
         output = ''
