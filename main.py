@@ -280,26 +280,32 @@ class Figure(Board):
                                         self.cell_size * (y - y1))
 
     def move_right(self):
-        if self.right_border() + self.cell_size > screen.get_width():
-            print('wall')
-            return
-        self.left += self.cell_size
-        self.update_bricks_pos()
-        self.bricks.update()
+        try:
+            if self.right_border() + self.cell_size > screen.get_width():
+                print('wall')
+                return
+            self.left += self.cell_size
+            self.update_bricks_pos()
+            self.bricks.update()
 
-        if self.is_touching_board():
-            self.move_left()
+            if self.is_touching_board():
+                self.move_left()
+        except Exception:
+            pass
 
     def move_left(self):
-        if self.left_border() - self.cell_size < 0:
-            print('wall')
-            return
-        self.left -= self.cell_size
-        self.update_bricks_pos()
-        self.bricks.update()
+        try:
+            if self.left_border() - self.cell_size < 0:
+                print('wall')
+                return
+            self.left -= self.cell_size
+            self.update_bricks_pos()
+            self.bricks.update()
 
-        if self.is_touching_board():
-            self.move_right()
+            if self.is_touching_board():
+                self.move_right()
+        except Exception:
+            pass
 
     def render(self, screen):
         self.bricks.draw(screen)
