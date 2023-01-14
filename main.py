@@ -7,7 +7,7 @@ import sys
 
 def draw_field_of_play(scr):
     if bg:
-        name = os.path.join('background', f'bg_{bg}.jpg')
+        name = os.path.join('background', f'bg_{bg}.png')
         image = pygame.image.load(name)
         all_sprites = pygame.sprite.Group()
         arrow = pygame.sprite.Sprite(all_sprites)
@@ -48,7 +48,7 @@ def draw_field_of_play(scr):
 def draw_standby_screen(scr):
     scr.fill((0, 0, 0))
     if bg:
-        name = os.path.join('background', f'bg_{bg}.jpg')
+        name = os.path.join('background', f'bg_{bg}.png')
         image = pygame.image.load(name)
         all_sprites = pygame.sprite.Group()
         arrow = pygame.sprite.Sprite(all_sprites)
@@ -56,16 +56,43 @@ def draw_standby_screen(scr):
         arrow.rect = arrow.image.get_rect()
         all_sprites.add(arrow)
         arrow.rect.x = 0
-        arrow.rect.y = 0
+        arrow.rect.y = 75
         all_sprites.draw(screen)
+
+    pygame.draw.line(screen, color, (0, 72), (510, 72), width=5)
+
+    pygame.draw.rect(screen, color, ((32, 10), (20, 50)))
+    pygame.draw.rect(screen, color, ((12, 10), (60, 10)))
+
+    pygame.draw.rect(screen, color, ((97, 10), (20, 50)))
+    pygame.draw.rect(screen, color, ((97, 10), (60, 10)))
+    pygame.draw.rect(screen, color, ((97, 30), (60, 10)))
+    pygame.draw.rect(screen, color, ((97, 50), (60, 10)))
+
+    pygame.draw.rect(screen, color, ((202, 10), (20, 50)))
+    pygame.draw.rect(screen, color, ((182, 10), (60, 10)))
+
+    pygame.draw.rect(screen, color, ((267, 10), (20, 50)))
+    pygame.draw.rect(screen, color, ((307, 10), (20, 30)))
+    pygame.draw.rect(screen, color, ((267, 10), (60, 10)))
+    pygame.draw.rect(screen, color, ((267, 30), (60, 10)))
+
+    pygame.draw.rect(screen, color, ((352, 10), (20, 50)))
+    pygame.draw.rect(screen, color, ((392, 10), (20, 50)))
+    pygame.draw.polygon(screen, color, ((352, 60), (392, 10), (411, 10), (370, 60)))
+
+    pygame.draw.rect(screen, color, ((437, 10), (20, 50)))
+    pygame.draw.rect(screen, color, ((437, 10), (60, 10)))
+    pygame.draw.rect(screen, color, ((437, 50), (60, 10)))
+
     font = pygame.font.Font(None, 90)
     if start:
         text = font.render('Пауза', True, color)
     else:
         text = font.render('Старт', True, color)
     text_x = width // 2 - text.get_width() // 2
-    scr.blit(text, (text_x, 150))
-    pygame.draw.polygon(scr, color, ((230, 250), (270, 270), (230, 290)))
+    scr.blit(text, (text_x, 180))
+    pygame.draw.polygon(scr, color, ((230, 290), (270, 310), (230, 330)))
 
     pygame.draw.line(scr, color, (0, 440), (510, 440), 3)
     pygame.draw.line(scr, color, (255, 440), (255, 780), 3)
@@ -457,41 +484,41 @@ if __name__ == '__main__':
                     if pause:
                         if event.pos[0] > 382 and event.pos[0] < 510 and event.pos[1] > 440 and event.pos[1] < 780:
                             if color == (255, 255, 255):
-                                color = (255, 0, 0)
-                            elif color == (255, 0, 0):
-                                color = (0, 255, 0)
-                            elif color == (0, 255, 0):
-                                color = (0, 0, 255)
-                            elif color == (0, 0, 255):
-                                color = (0, 255, 255)
-                            elif color == (0, 255, 255):
-                                color = (255, 255, 0)
-                            elif color == (255, 255, 0):
-                                color = (255, 0, 255)
+                                color = (255, 155, 155)
+                            elif color == (255, 155, 155):
+                                color = (155, 255, 155)
+                            elif color == (155, 255, 155):
+                                color = (155, 155, 255)
+                            elif color == (155, 155, 255):
+                                color = (155, 255, 255)
+                            elif color == (155, 255, 255):
+                                color = (255, 255, 155)
+                            elif color == (255, 255, 155):
+                                color = (255, 155, 255)
                             else:
                                 color = (255, 255, 255)
                         if event.pos[0] > 255 and event.pos[0] < 382 and event.pos[1] > 440 and event.pos[1] < 780:
                             if color == (255, 255, 255):
-                                color = (255, 0, 255)
-                            elif color == (255, 0, 0):
+                                color = (255, 155, 255)
+                            elif color == (255, 155, 155):
                                 color = (255, 255, 255)
-                            elif color == (0, 255, 0):
-                                color = (255, 0, 0)
-                            elif color == (0, 0, 255):
-                                color = (0, 255, 0)
-                            elif color == (0, 255, 255):
-                                color = (0, 0, 255)
-                            elif color == (255, 255, 0):
-                                color = (0, 255, 255)
+                            elif color == (155, 255, 155):
+                                color = (255, 155, 155)
+                            elif color == (155, 155, 255):
+                                color = (155, 255, 155)
+                            elif color == (155, 255, 255):
+                                color = (155, 155, 255)
+                            elif color == (255, 255, 155):
+                                color = (155, 255, 255)
                             else:
-                                color = (255, 255, 0)
+                                color = (255, 255, 155)
                         if event.pos[0] > 0 and event.pos[0] < 127 and event.pos[1] > 440 and event.pos[1] < 780:
                             if not bg:
-                                bg = 6
+                                bg = 15
                             else:
                                 bg -= 1
                         if event.pos[0] > 127 and event.pos[0] < 255 and event.pos[1] > 440 and event.pos[1] < 780:
-                            if bg == 6:
+                            if bg == 15:
                                 bg = 0
                             else:
                                 bg += 1
