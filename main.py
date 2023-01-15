@@ -154,15 +154,12 @@ def new_game():
 
 
 class Board:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
+    def __init__(self):
         self.left = 10
         self.top = 10
         self.cell_size = 30
         self.board = []
         self.bricks = pygame.sprite.Group()
-        self.move = 0
         self.is_game = True
 
     def set_view(self, left, top, cell_size):
@@ -206,7 +203,7 @@ class Board:
 
 class Figure(Board):
     def __init__(self, form, speed=100):
-        super().__init__(len(form.split('\n')), len(form.split('\n')[0]))
+        super().__init__()
 
         for line in form.split('\n'):
             self.board.append([])
@@ -430,7 +427,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption('Тетрис')
 
-    board = Board(10, 20)
+    board = Board()
     board.set_view(0, 0, 30)
     board.board = [[0 for i in range(17)] for i in range(100)]
     fps = 50
