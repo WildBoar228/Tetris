@@ -15,7 +15,7 @@ def draw_field_of_play(scr):
         arrow.rect = arrow.image.get_rect()
         all_sprites.add(arrow)
         arrow.rect.x = 0
-        arrow.rect.y = 0
+        arrow.rect.y = 75
         all_sprites.draw(screen)
 
     # все линии, значки паузы и рестарта
