@@ -446,10 +446,10 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                if not start:
-                    start = True
-                    figure = create_new_fig()
                 if event.key == pygame.K_SPACE:
+                    if not start:
+                        start = True
+                        figure = create_new_fig()
                     if pause:
                         pause = False
                     else:
